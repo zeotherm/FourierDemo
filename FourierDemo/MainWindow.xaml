@@ -5,8 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FourierDemo"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="MainWindow" Height="450" Width="800" Background="Gray">
+    <Canvas HorizontalAlignment="Left" Height="376" Margin="286,25,0,0" VerticalAlignment="Top" Width="488">
+        <Line
+         Name="testLine"
+         X1="244" Y1="188"
+         X2="344" Y2="188"
+         Stroke="Black"
+         StrokeThickness="4"/>
+        <Ellipse Height="200" Canvas.Left="144" Canvas.Top="88" Stroke="Black" StrokeThickness="4" Width="200"/>
+        <Ellipse Height="12" Width="12" Canvas.Top="182" Stroke="Red" Fill="Red" StrokeThickness="2" Canvas.Left="344" />
+        <Button x:Name="advButton" Content="Advance Angle" Canvas.Left="-267" Width="191" Height="89" FontSize="24" Click="AdvButton_Click"/>
+    </Canvas>
+
 </Window>
