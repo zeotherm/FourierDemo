@@ -3,19 +3,31 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:local="clr-namespace:FourierDemo"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Background="Gray">
-    <Canvas HorizontalAlignment="Left" Height="376" Margin="286,25,0,0" VerticalAlignment="Top" Width="488">
-        <Line
-         Name="testLine"
-         X1="244" Y1="188"
-         X2="344" Y2="188"
-         Stroke="Black"
-         StrokeThickness="4"/>
-        <Ellipse Height="200" Canvas.Left="144" Canvas.Top="88" Stroke="Black" StrokeThickness="4" Width="200"/>
-        <Ellipse Height="12" Width="12" Canvas.Top="182" Stroke="Red" Fill="Red" StrokeThickness="2" Canvas.Left="344" />
+    <Window.Resources>
+        <local:XYPoint x:Key="XYPoint"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <Binding Source="{StaticResource XYPoint}"/>
+    </Window.DataContext>
+    <Canvas x:Name="mainCanvas" HorizontalAlignment="Left" Height="376" Margin="289,25,0,0" VerticalAlignment="Top" Width="488">
+        
+        <Line Name="testLine" X1="244" Y1="176" X2="344" Y2="176" Stroke="Black" StrokeThickness="4" Canvas.Left="-192"/>
+        <Ellipse Height="200" Canvas.Left="-48" Canvas.Top="76" Stroke="Black" StrokeThickness="4" Width="200"/>
+        <Ellipse x:Name="yVal" Height="12" Width="12" Canvas.Top="182" Stroke="Red" Fill="Red" StrokeThickness="2" Canvas.Left="344" />
         <Button x:Name="advButton" Content="Advance Angle" Canvas.Left="-267" Width="191" Height="89" FontSize="24" Click="AdvButton_Click"/>
+        <Button x:Name="timerButton" Content="Toggle Timer" FontSize="24" Height="83" Canvas.Left="-267" Canvas.Top="136" Width="171" Click="TimerButton_Click"/>
+        <Grid Height="251" Canvas.Left="229" Canvas.Top="53" Width="234">
+            <oxy:Plot Title="{Binding Title}">
+                <oxy:Plot.Series>
+                    <oxy:LineSeries ItemsSource="{Binding Points}"/>
+                </oxy:Plot.Series>
+            </oxy:Plot>
+        </Grid>
+        <Button Content="Button" Canvas.Left="-243" Canvas.Top="240" Width="110" Height="36" Click="Button_Click"/>
     </Canvas>
 
 </Window>
