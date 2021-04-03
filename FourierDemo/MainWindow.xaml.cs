@@ -23,10 +23,13 @@ namespace FourierDemo {
     public partial class MainWindow : Window {
         System.Timers.Timer timer = new System.Timers.Timer(100);
         private double theta = 0, N = 3;
-        private readonly double x_0, y_0, r, deg2rad; // Where the origin is
+        private readonly double x_0, y_0, r, deg2rad, zero_point; // Where the origin is
         private XYPoint p;
+        private PlotViewModel pvm;
         public MainWindow() {
             InitializeComponent();
+            this.pvm = new PlotViewModel();
+            this.DataContext = this.pvm; // new PlotViewModel();
             this.Title = "My Plot";
             //this.Points = 
 
@@ -36,6 +39,7 @@ namespace FourierDemo {
             timer.Enabled = false;
             x_0 = testLine.X1;
             y_0 = testLine.Y1;
+            zero_point = y_0;
             r = testLine.X2 - testLine.X1;
             deg2rad = Math.PI / 180;
         }
@@ -85,12 +89,16 @@ namespace FourierDemo {
             testLine.Y2 = xy.Item2;
             //mainCanvas.Children.Remove(yVal);
             Canvas.SetTop(yVal, testLine.Y2 - yVal.Height/2);
-    
+            pvm.OnNewData(zero_point - xy.Item2);
+
         }
         private Tuple<double, double> ComputeNewCoords() {
-            theta = (theta - N * deg2rad) % 360;
-            var x = x_0 + r * Math.Cos(theta);
-            var y = y_0 + r * Math.Sin(theta);
+            //theta = (theta - N * deg2rad) % 360;
+            theta += N * deg2rad;
+            var cosTheta = Math.Cos(theta);
+            var sinTheta = Math.Sin(theta);
+            var x = x_0 + r * cosTheta;
+            var y = y_0 - r * sinTheta;
             return Tuple.Create<double, double>(x, y);
         }
 

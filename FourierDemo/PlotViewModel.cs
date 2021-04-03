@@ -32,9 +32,9 @@ namespace FourierDemo {
         public PlotModel PlotModel { get; private set; }
 
         public PlotViewModel() {
-            this.timer = new Timer(OnTimerElapsed);
+            //this.timer = new Timer(OnTimerElapsed);
             this.Function = (t, x, a) => Math.Cos(t * a) * (x == 0 ? 1 : Math.Sin(x * a) / x);
-            this.SimulationType = SimulationType.Waves;
+            this.SimulationType = SimulationType.TimeSimulation;
         }
 
         public SimulationType SimulationType
@@ -49,14 +49,14 @@ namespace FourierDemo {
         }
 
         private void SetupModel() {
-            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
+            //this.timer.Change(Timeout.Infinite, Timeout.Infinite);
 
             PlotModel = new PlotModel();
             PlotModel.Axes.Add(new LinearAxis
             {
                 Position = AxisPosition.Left,
-                Minimum = -2,
-                Maximum = 2
+                Minimum = -125,
+                Maximum = 125
             });
 
             this.numberOfSeries = this.SimulationType == SimulationType.TimeSimulation ? 1 : 20;
@@ -66,15 +66,33 @@ namespace FourierDemo {
 
             this.watch.Start();
             this.RaisePropertyChanged("PlotModel");
-            this.timer.Change(1000, UpdateInterval);
+            //this.timer.Change(1000, UpdateInterval);
         }
 
+        public void OnNewData(double y) {
+            lock (this.PlotModel.SyncRoot) {
+                this.UpdateY(y);
+            }
+            this.PlotModel.InvalidatePlot(true);
+        }
 
         private void OnTimerElapsed(object state) {
             lock (this.PlotModel.SyncRoot) {
                 this.Update();
             }
             this.PlotModel.InvalidatePlot(true);
+        }
+
+        private void UpdateY(double y) {
+            var n = 0;
+            var s = (LineSeries)PlotModel.Series[0];
+            double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
+            s.Points.Add(new DataPoint(x, y));
+            n += s.Points.Count;
+            if (this.TotalNumberOfPoints != n) {
+                this.TotalNumberOfPoints = n;
+                this.RaisePropertyChanged("TotalNumberOfPoints");
+            }
         }
 
         private void Update() {
