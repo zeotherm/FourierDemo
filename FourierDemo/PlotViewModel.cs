@@ -23,10 +23,10 @@ namespace FourierDemo {
         private bool disposed;
         private readonly Timer timer;
         private readonly Stopwatch watch = new Stopwatch();
-        private int numberOfSeries;
+        private int numberOfSeries, maxPoints = 200;
         private SimulationType simulationType;
         public int TotalNumberOfPoints { get; private set; }
-
+        public double DeltaTheta { get; private set; }
         private Func<double, double, double, double> Function { get; set; }
 
         public PlotModel PlotModel { get; private set; }
@@ -35,6 +35,7 @@ namespace FourierDemo {
             //this.timer = new Timer(OnTimerElapsed);
             this.Function = (t, x, a) => Math.Cos(t * a) * (x == 0 ? 1 : Math.Sin(x * a) / x);
             this.SimulationType = SimulationType.TimeSimulation;
+            DeltaTheta = 3;
         }
 
         public SimulationType SimulationType
@@ -69,9 +70,9 @@ namespace FourierDemo {
             //this.timer.Change(1000, UpdateInterval);
         }
 
-        public void OnNewData(double y) {
+        public void OnNewData(double x, double y) {
             lock (this.PlotModel.SyncRoot) {
-                this.UpdateY(y);
+                this.UpdateY(x, y);
             }
             this.PlotModel.InvalidatePlot(true);
         }
@@ -83,12 +84,18 @@ namespace FourierDemo {
             this.PlotModel.InvalidatePlot(true);
         }
 
-        private void UpdateY(double y) {
+        public void OnNewSpeed(double dtheta) {
+            this.DeltaTheta = dtheta;
+            this.RaisePropertyChanged("DeltaTheta");
+        }
+
+        private void UpdateY(double x, double y) {
             var n = 0;
             var s = (LineSeries)PlotModel.Series[0];
-            double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
+            //double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
             s.Points.Add(new DataPoint(x, y));
             n += s.Points.Count;
+            if (s.Points.Count >= maxPoints) s.Points.RemoveAt(0);
             if (this.TotalNumberOfPoints != n) {
                 this.TotalNumberOfPoints = n;
                 this.RaisePropertyChanged("TotalNumberOfPoints");
@@ -103,7 +110,7 @@ namespace FourierDemo {
                 switch (SimulationType) {
                     case SimulationType.TimeSimulation: {
                             double x = s.Points.Count > 0 ? s.Points[s.Points.Count - 1].X + 1 : 0;
-                            if (s.Points.Count >= 200) s.Points.RemoveAt(0);
+                            if (s.Points.Count >= maxPoints) s.Points.RemoveAt(0);
                             double y = 0;
                             int m = 80;
                             for (int j = 0; j < m; j++)

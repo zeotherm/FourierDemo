@@ -55,24 +55,14 @@ namespace FourierDemo {
             }));
         }
 
+        private void Button_Click_1(object sender, RoutedEventArgs e) {
+            N -= (N > 3 ? 3 : 0);
+            pvm.OnNewSpeed(N);
+        }
+
         private void Button_Click(object sender, RoutedEventArgs e) {
-            var old_p = p.Points;
-            var old_x1 = old_p[0].X;
-            var old_y1 = old_p[0].Y;
-            var old_x2 = old_p[1].X;
-            var old_y2 = old_p[1].Y;
-
-            var ps = new List<DataPoint>
-                              {
-                                  new DataPoint(2, 3),
-                                  new DataPoint(4, 5)
-                              };
-
-
-            p.Points = new ObservableCollection<DataPoint>(ps);
-            p.Title = p.Title + "_bark!";
-
-            return;
+            N += 3;
+            pvm.OnNewSpeed(N);
         }
 
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e) {
@@ -89,7 +79,7 @@ namespace FourierDemo {
             testLine.Y2 = xy.Item2;
             //mainCanvas.Children.Remove(yVal);
             Canvas.SetTop(yVal, testLine.Y2 - yVal.Height/2);
-            pvm.OnNewData(zero_point - xy.Item2);
+            pvm.OnNewData(theta, zero_point - xy.Item2);
 
         }
         private Tuple<double, double> ComputeNewCoords() {

@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Background="Gray">
     <Canvas x:Name="mainCanvas" HorizontalAlignment="Left" Height="376" Margin="289,25,0,0" VerticalAlignment="Top" Width="488">
-        
+
         <Line Name="testLine" X1="244" Y1="176" X2="344" Y2="176" Stroke="Black" StrokeThickness="4" Canvas.Left="-192"/>
         <Ellipse Height="200" Canvas.Left="-48" Canvas.Top="76" Stroke="Black" StrokeThickness="4" Width="200"/>
         <Ellipse x:Name="yVal" Height="12" Width="12" Canvas.Top="182" Stroke="Red" Fill="Red" StrokeThickness="2" Canvas.Left="344" />
@@ -17,7 +17,10 @@
         <Grid Height="251" Canvas.Left="229" Canvas.Top="53" Width="234">
             <oxy:PlotView x:Name="plot1" Model="{Binding PlotModel}"/>
         </Grid>
-        <Button Content="Button" Canvas.Left="-243" Canvas.Top="240" Width="110" Height="36" Click="Button_Click"/>
+        <Button Content="SpeedUpButton" Canvas.Left="-243" Canvas.Top="240" Width="110" Height="36" Click="Button_Click"/>
+        <Button Content="Slow Down" Canvas.Left="-243" Canvas.Top="304" Width="110" Height="30" Click="Button_Click_1"/>
+        <Label Content="N = " Canvas.Left="-257" Canvas.Top="365"/>
+        <TextBlock Canvas.Left="-218" Canvas.Top="365" Text="{Binding DeltaTheta, StringFormat='dTheta: {0}'}"/>
     </Canvas>
 
 </Window>
