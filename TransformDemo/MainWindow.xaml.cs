@@ -22,53 +22,104 @@ namespace TransformDemo {
     public partial class MainWindow : Window {
         private double x0, y0, x, y;
         private double r0 = 50;
+        Queue<double> yPoints, epiPoints;
+        List<int> xPoints;
+
+        int counter = 0;
         System.Timers.Timer timer = new System.Timers.Timer(100);
-        private double dTheta = 3, theta = 0;
+        private double dTheta = 3, theta = 0, y_range;
         public MainWindow() {
             InitializeComponent();
             timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
             timer.Enabled = false;
+            y_range = this.EpiCycleCanvas.Height;
 
-            x0 = this.CircleCanvas.Width / 2;
-            y0 = this.CircleCanvas.Height / 2;
+            x0 = this.EpiCycleCanvas.Width / 2;
+            y0 = this.EpiCycleCanvas.Height / 2;
             x = x0;
             y = y0;
-            //double theta = 25;
-            //for (var i = 0; i < 3; i++) {
-            //    var prev_x = x;
-            //    var prev_y = y;
-            //    int n = 2 * i + 1;
-            //    var radius = r0 * (4.0 / (n * Math.PI));
-            //    DrawCircle(radius, prev_x, prev_y);
-            //    x += radius * Math.Cos(n * theta * Math.PI / 180.0);
-            //    y += radius * Math.Sin(n * theta * Math.PI / 180.0);
-            //    DrawLine(prev_x, prev_y, x, y);
+            ReDraw();
+
+            var xs = Enumerable.Range(0, 360).ToList();
+            var ys = Enumerable.Range(0, 360).ToList(); // new List<double> { };
+            //PointCollection ps = new PointCollection();
+            //point_q = new Queue<Point>();
+            //foreach (var i in xs) {
+            //    if (i < 90 || i >= 270) {
+            //        point_q.Enqueue(new Point(i, y0 - r0));
+            //        //ps.Add(new Point(i, y0-r0));
+            //    } else
+            //        point_q.Enqueue(new Point(i, y0 + r0));
+            //        //ps.Add(new Point(i, y0+r0));
             //}
-            //DrawPoint(x, y);
-            // draw a circle
-            //DrawCircle(r0, x0, y0);
-            //var x1 = x0 + 4/Math.PI * r0 * Math.Cos(45 * Math.PI / 180);
-            //var y1 = y0 + 4 / Math.PI * r0 * Math.Sin(45 * Math.PI / 180);
-            //DrawLine(x0, y0, x1, y1);
-            //DrawCircle(r1, x1, y1);
-            //var x2 = x1 + r1 * Math.Cos(120 * Math.PI / 180);
-            //var y2 = y1 + r1 * Math.Sin(120 * Math.PI / 180);
-            //DrawLine(x1, y1, x2, y2);
-            //DrawCircle(r2, x2, y2);
+            xPoints = new List<int>();
+            for( int i = 0; i < 360; i += (int)dTheta) {
+                xPoints.Add(i);
+            }
+            //yPoints = new Queue<double>();
+            //foreach( int i in xPoints) {
+            //    if (i < 180 ) {
+            //        yPoints.Enqueue(y0 - r0);
+            //    } else
+            //        yPoints.Enqueue(y0 + r0);
+            //}
+            //var points = xPoints.Zip(yPoints, (x, y) => new Point(x, y));
+            ////for ( int i = 0; i < 360; i++) {
+            ////    ps.Add(new Point(i, 20));
+            ////}
+            //Polyline polyline = new Polyline
+            //{
+            //    StrokeThickness = 1,
+            //    Stroke = Brushes.Black,
+            //    Points = new PointCollection(points)
+            //};
+
+            //LinePlotCanvas.Children.Add(polyline);
+            epiPoints = new Queue<double>();
+            yPoints = new Queue<double>();
         }
+
         void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
             this.Dispatcher.Invoke(DispatcherPriority.Normal, (Action)(() =>
             {
                 ReDraw();
+                ReDrawGraph();
             }));
         }
 
+        private void ReDrawGraph() {
+            LinePlotCanvas.Children.Clear();
+            if(yPoints.Count > xPoints.Count) yPoints.Dequeue();
+            if (epiPoints.Count > xPoints.Count) epiPoints.Dequeue();
+            epiPoints.Enqueue(y_range - y);
+            counter += (int)dTheta;
+            if (counter % 360 < 180)
+                yPoints.Enqueue(y_range - (y0 + r0));
+            else
+                yPoints.Enqueue(y_range - (y0 - r0));
+
+            Polyline polyline = new Polyline
+            {
+                StrokeThickness = 1,
+                Stroke = Brushes.Black,
+                Points = new PointCollection(xPoints.Zip(yPoints, (x, y) => new Point(x, y)))
+            };
+            LinePlotCanvas.Children.Add(polyline);
+            Polyline epiOutput = new Polyline
+            {
+                StrokeThickness = 2,
+                Stroke = Brushes.Red,
+                Points = new PointCollection(xPoints.Zip(epiPoints, (x, y) => new Point(x, y)))
+            };
+            LinePlotCanvas.Children.Add(epiOutput);
+        }
+
         private void ReDraw() {
-            this.CircleCanvas.Children.Clear();
+            EpiCycleCanvas.Children.Clear();
             x = x0;
             y = y0;
             theta += dTheta;
-            for (var i = 0; i < _n_circles; i++) {
+            for (var i = 0; i < _numCircles; i++) {
                 var prev_x = x;
                 var prev_y = y;
                 int n = 2 * i + 1;
@@ -83,16 +134,17 @@ namespace TransformDemo {
         }
 
         private void DrawCircle(double r, double c_x, double c_y) {
-            Ellipse c1 = new Ellipse();
-            c1.Height = 2 * r;
-            c1.Width = 2 * r;
-            c1.StrokeThickness = 2;
-            c1.Stroke = Brushes.Black;
-            double y_range = this.CircleCanvas.Height;
+            Ellipse c1 = new Ellipse
+            {
+                Height = 2 * r,
+                Width = 2 * r,
+                StrokeThickness = 2,
+                Stroke = Brushes.Black
+            };
             
             Canvas.SetTop(c1, y_range- (c_y+r));
             Canvas.SetLeft(c1, c_x-r);
-            this.CircleCanvas.Children.Add(c1);
+            this.EpiCycleCanvas.Children.Add(c1);
         }
 
         private void StartButton_Click(object sender, RoutedEventArgs e) {
@@ -104,53 +156,37 @@ namespace TransformDemo {
         }
 
         private void DrawPoint(double c_x, double c_y) {
-            Ellipse c1 = new Ellipse();
-            c1.Height = 5;
-            c1.Width = 5;
-            c1.StrokeThickness = 2;
-            c1.Stroke = Brushes.Red;
-            c1.Fill = Brushes.Red;
-            double y_range = this.CircleCanvas.Height;
+            Ellipse c1 = new Ellipse
+            {
+                Height = 5,
+                Width = 5,
+                StrokeThickness = 2,
+                Stroke = Brushes.Red,
+                Fill = Brushes.Red
+            };
 
             Canvas.SetTop(c1, y_range - (c_y + 2.5));
             Canvas.SetLeft(c1, c_x - 2.5);
-            this.CircleCanvas.Children.Add(c1);
-
+            this.EpiCycleCanvas.Children.Add(c1);
         }
 
         private void DrawLine(double x0, double y0, double x1, double y1) {
-            double y_range = this.CircleCanvas.Height;
             Line l1 = new Line { X1 = x0, Y1 = y_range-y0, X2 = x1, Y2 = y_range-y1, Stroke=Brushes.Black, StrokeThickness=1};
-            this.CircleCanvas.Children.Add(l1);
+            this.EpiCycleCanvas.Children.Add(l1);
         }
 
-        private void NCircleBox_TextChanged(object sender, TextChangedEventArgs e) {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null) {
-                string theText = textBox.Text;
-                CircleText = theText;
-            }
-            var s = 0;
+        private int _numCircles = 2;
+        public double NumberOfCircles
+        {
+            get { return 1.0*_numCircles; }
+            set { _numCircles = (int)value; NotifyPropertyChanged("CircleText"); }
         }
 
-        private void MySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-            Slider thisSlider = sender as Slider;
-            if (thisSlider != null) {
-                int v = (int)thisSlider.Value;
-                CircleText = v.ToString();
-            }
+        private void StopButton_Click(object sender, RoutedEventArgs e) {
+            timer.Enabled = false;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
-        private int _n_circles = 2;
-        public string CircleText
-        {
-            get { return _n_circles.ToString(); }
-            set { _n_circles = Int32.Parse(value); NotifyPropertyChanged("CircleText"); }
-        }
-
-
 
         private void NotifyPropertyChanged(String propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
