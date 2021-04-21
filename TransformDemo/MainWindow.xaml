@@ -3,11 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:pt="clr-namespace:PropertyTools.Wpf;assembly=PropertyTools.Wpf"
         xmlns:local="clr-namespace:TransformDemo"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="825" DataContext="{Binding RelativeSource={RelativeSource Self}}">
+        Title="MainWindow" Height="500" Width="830" DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <DockPanel HorizontalAlignment="Left" Height="454" LastChildFill="False" Margin="10,15,0,0" VerticalAlignment="Top" Width="780">
-        
+        <Menu DockPanel.Dock="Top">
+            <pt:EnumMenuItem Header="Curve Type" SelectedValue="{Binding CurveSelection}"/>
+        </Menu>
         <StackPanel DockPanel.Dock="Bottom" Margin="8" Orientation="Horizontal">
             <Button x:Name="StartButton" Content="Start" Height="40" Margin="0,0,0,0" Width="132" Click="StartButton_Click"/>
             <Button x:Name="StopButton" Content="Stop" Height="40" Margin="10,0,0,0" Width="132" Click="StopButton_Click"/>
@@ -15,7 +18,8 @@
             <Slider x:Name="NCycleSlider" Height="30" Width="200" Maximum="20" IsSnapToTickEnabled="True" SmallChange="1" Cursor="Arrow" Minimum="1" Margin="10,10,0,0" Value="{Binding NumberOfCircles}"/>
             <Label Content="{Binding ElementName=NCycleSlider,Path=Value}" Height="28" Width="93"/>
         </StackPanel>
-        <Canvas x:Name="EpiCycleCanvas" Height="400" DockPanel.Dock="Left" VerticalAlignment="Top" Width="400"/>
+        <Canvas x:Name="EpiCycleCanvas" Height="400" DockPanel.Dock="Left" VerticalAlignment="Top" Width="400">
+        </Canvas>
         <Canvas x:Name="LinePlotCanvas" Height="400" DockPanel.Dock="Right" VerticalAlignment="Top" Width="400"/>
     </DockPanel>
 </Window>

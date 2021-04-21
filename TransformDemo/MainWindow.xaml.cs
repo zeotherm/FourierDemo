@@ -2,20 +2,20 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace TransformDemo {
+    public enum CurveSelection {
+        SquareWave,
+        TriangleWave
+    }
+
+
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -23,14 +23,17 @@ namespace TransformDemo {
         private double x0, y0, x, y;
         private double r0 = 50;
         Queue<double> yPoints, epiPoints;
-        List<int> xPoints;
+        List<double> xPoints;
+        private CurveSelection curveSelection;
+        private double graphY;
+        private double circlesY;
 
         int counter = 0;
         System.Timers.Timer timer = new System.Timers.Timer(100);
         private double dTheta = 3, theta = 0, y_range;
         public MainWindow() {
             InitializeComponent();
-            timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
+            timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
             timer.Enabled = false;
             y_range = this.EpiCycleCanvas.Height;
 
@@ -41,45 +44,29 @@ namespace TransformDemo {
             ReDraw();
 
             var xs = Enumerable.Range(0, 360).ToList();
-            var ys = Enumerable.Range(0, 360).ToList(); // new List<double> { };
-            //PointCollection ps = new PointCollection();
-            //point_q = new Queue<Point>();
-            //foreach (var i in xs) {
-            //    if (i < 90 || i >= 270) {
-            //        point_q.Enqueue(new Point(i, y0 - r0));
-            //        //ps.Add(new Point(i, y0-r0));
-            //    } else
-            //        point_q.Enqueue(new Point(i, y0 + r0));
-            //        //ps.Add(new Point(i, y0+r0));
-            //}
-            xPoints = new List<int>();
-            for( int i = 0; i < 360; i += (int)dTheta) {
-                xPoints.Add(i);
+            var ys = Enumerable.Range(0, 360).ToList(); 
+            xPoints = new List<double>();
+            for( int i = 0; i < 720; i += (int)dTheta) {
+                xPoints.Add(i*0.5);
             }
-            //yPoints = new Queue<double>();
-            //foreach( int i in xPoints) {
-            //    if (i < 180 ) {
-            //        yPoints.Enqueue(y0 - r0);
-            //    } else
-            //        yPoints.Enqueue(y0 + r0);
-            //}
-            //var points = xPoints.Zip(yPoints, (x, y) => new Point(x, y));
-            ////for ( int i = 0; i < 360; i++) {
-            ////    ps.Add(new Point(i, 20));
-            ////}
-            //Polyline polyline = new Polyline
-            //{
-            //    StrokeThickness = 1,
-            //    Stroke = Brushes.Black,
-            //    Points = new PointCollection(points)
-            //};
-
-            //LinePlotCanvas.Children.Add(polyline);
             epiPoints = new Queue<double>();
             yPoints = new Queue<double>();
         }
 
-        void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
+        public CurveSelection CurveSelection
+        {
+            get { return this.curveSelection; }
+            set
+            {
+                this.curveSelection = value;
+                this.NotifyPropertyChanged("CurveSelection");
+                ReDraw();
+                ReDrawGraph();
+            }
+        }
+
+
+        void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
             this.Dispatcher.Invoke(DispatcherPriority.Normal, (Action)(() =>
             {
                 ReDraw();
@@ -89,15 +76,39 @@ namespace TransformDemo {
 
         private void ReDrawGraph() {
             LinePlotCanvas.Children.Clear();
-            if(yPoints.Count > xPoints.Count) yPoints.Dequeue();
+            if (yPoints.Count > xPoints.Count) yPoints.Dequeue();
             if (epiPoints.Count > xPoints.Count) epiPoints.Dequeue();
+            
             epiPoints.Enqueue(y_range - y);
             counter += (int)dTheta;
-            if (counter % 360 < 180)
-                yPoints.Enqueue(y_range - (y0 + r0));
-            else
-                yPoints.Enqueue(y_range - (y0 - r0));
+            double yprime;
+            switch (curveSelection)
+            {
+                case CurveSelection.SquareWave: 
+                {
+                    if (counter % 360 < 180)
+                        yPoints.Enqueue(y_range - (y0 + r0));
+                    else
+                        yPoints.Enqueue(y_range - (y0 - r0));
 
+                    break;
+                }
+                case CurveSelection.TriangleWave:
+                {
+                    var x = counter % 360;
+                    if( x <= 90) {
+                        yprime = x / 90.0 * r0;
+                        yPoints.Enqueue(y_range - (y0 + yprime));
+                    } else if (x > 90 && x <= 270) {
+                        yprime = (1.0 + (90 - x) / 90.0)*r0;
+                        yPoints.Enqueue(y_range - (y0 + yprime));
+                    } else {
+                        yprime = ((x - 270.0) / 90.0 - 1.0)* r0;
+                        yPoints.Enqueue(y_range - (y0 + yprime));
+                    }
+                    break;
+                }
+            }
             Polyline polyline = new Polyline
             {
                 StrokeThickness = 1,
@@ -118,19 +129,33 @@ namespace TransformDemo {
             EpiCycleCanvas.Children.Clear();
             x = x0;
             y = y0;
-            theta += dTheta;
+
             for (var i = 0; i < _numCircles; i++) {
                 var prev_x = x;
                 var prev_y = y;
                 int n = 2 * i + 1;
-                var radius = r0 * (4.0 / (n * Math.PI));
-                DrawCircle(radius, prev_x, prev_y);
-                x += radius * Math.Cos(n * theta * Math.PI / 180.0);
-                y += radius * Math.Sin(n * theta * Math.PI / 180.0);
-                DrawLine(prev_x, prev_y, x, y);
+                switch (curveSelection) {
+                    case CurveSelection.SquareWave: {
+                        var radius = r0 * (4.0 / (n * Math.PI));
+                        DrawCircle(radius, prev_x, prev_y);
+                        x += radius * Math.Cos(n * theta * Math.PI / 180.0);
+                        y += radius * Math.Sin(n * theta * Math.PI / 180.0);
+                        DrawLine(prev_x, prev_y, x, y);
+                        break;
+                    }
+                    case CurveSelection.TriangleWave: {
+                        var radius = r0 * (8 / (Math.PI * Math.PI * n * n));
+                        DrawCircle(radius, prev_x, prev_y);
+                        var prefix = Math.Pow(-1, (n - 1) / 2);
+                        x += prefix * radius * Math.Cos(n * theta * Math.PI / 180.0);
+                        y += prefix * radius * Math.Sin(n * theta * Math.PI / 180.0);
+                        DrawLine(prev_x, prev_y, x, y);
+                        break;
+                    }
+                }
             }
             DrawPoint(x, y);
-
+            theta += dTheta;
         }
 
         private void DrawCircle(double r, double c_x, double c_y) {
@@ -149,10 +174,6 @@ namespace TransformDemo {
 
         private void StartButton_Click(object sender, RoutedEventArgs e) {
             timer.Enabled = true;
-        }
-
-        private void Step_Click(object sender, RoutedEventArgs e) {
-            ReDraw();
         }
 
         private void DrawPoint(double c_x, double c_y) {
@@ -175,7 +196,7 @@ namespace TransformDemo {
             this.EpiCycleCanvas.Children.Add(l1);
         }
 
-        private int _numCircles = 2;
+        private int _numCircles = 1;
         public double NumberOfCircles
         {
             get { return 1.0*_numCircles; }
@@ -188,7 +209,7 @@ namespace TransformDemo {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void NotifyPropertyChanged(String propertyName) {
+        private void NotifyPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
