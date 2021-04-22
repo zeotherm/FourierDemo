@@ -11,7 +11,8 @@ using System.Windows.Threading;
 namespace TransformDemo {
     public enum CurveSelection {
         SquareWave,
-        TriangleWave
+        TriangleWave,
+        SawtoothWave
     }
 
 
@@ -98,14 +99,32 @@ namespace TransformDemo {
                     var x = counter % 360;
                     if( x <= 90) {
                         yprime = x / 90.0 * r0;
-                        yPoints.Enqueue(y_range - (y0 + yprime));
                     } else if (x > 90 && x <= 270) {
                         yprime = (1.0 + (90 - x) / 90.0)*r0;
-                        yPoints.Enqueue(y_range - (y0 + yprime));
                     } else {
                         yprime = ((x - 270.0) / 90.0 - 1.0)* r0;
-                        yPoints.Enqueue(y_range - (y0 + yprime));
                     }
+                    yPoints.Enqueue(y_range - (y0 + yprime));
+                    break;
+                }
+                case CurveSelection.SawtoothWave: 
+                {
+                    // x == -180, y == -r0
+                    // x == 179, y = r0
+
+                    // y = (r0- (-r0))/(360)*(x - -180)
+                    // 2r0/360*(x+180)
+                    // x == 180, y = -r0
+                    // x == 359, y ~= 0
+                    var x = counter % 360;
+                    if (x < 180) {
+                        yprime = 2 * r0 / 360.0 * (x + 180.0) - r0;
+                    } else if (x == 180) {
+                        yprime = -r0;
+                    } else {
+                        yprime = r0 / 180.0 * (x - 180) - r0;
+                    }
+                    yPoints.Enqueue(y_range - (y0 + yprime));
                     break;
                 }
             }
@@ -133,9 +152,10 @@ namespace TransformDemo {
             for (var i = 0; i < _numCircles; i++) {
                 var prev_x = x;
                 var prev_y = y;
-                int n = 2 * i + 1;
                 switch (curveSelection) {
-                    case CurveSelection.SquareWave: {
+                    case CurveSelection.SquareWave:
+                    {
+                        int n = 2 * i + 1;
                         var radius = r0 * (4.0 / (n * Math.PI));
                         DrawCircle(radius, prev_x, prev_y);
                         x += radius * Math.Cos(n * theta * Math.PI / 180.0);
@@ -144,9 +164,20 @@ namespace TransformDemo {
                         break;
                     }
                     case CurveSelection.TriangleWave: {
+                        int n = 2 * i + 1;
                         var radius = r0 * (8 / (Math.PI * Math.PI * n * n));
                         DrawCircle(radius, prev_x, prev_y);
                         var prefix = Math.Pow(-1, (n - 1) / 2);
+                        x += prefix * radius * Math.Cos(n * theta * Math.PI / 180.0);
+                        y += prefix * radius * Math.Sin(n * theta * Math.PI / 180.0);
+                        DrawLine(prev_x, prev_y, x, y);
+                        break;
+                    }
+                    case CurveSelection.SawtoothWave: {
+                        int n = i+1;
+                        var radius = 2 * r0 / (Math.PI * n);
+                        DrawCircle(radius, prev_x, prev_y);
+                        var prefix = Math.Pow(-1.0, n+1);
                         x += prefix * radius * Math.Cos(n * theta * Math.PI / 180.0);
                         y += prefix * radius * Math.Sin(n * theta * Math.PI / 180.0);
                         DrawLine(prev_x, prev_y, x, y);
